@@ -18,7 +18,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 
 // Server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;//env
 app.listen(PORT, () => {
-  console.log(`✅ Server is running on http://localhost:${PORT}`);
+  console.log(` Server is running on http://localhost:${PORT}`);
 });

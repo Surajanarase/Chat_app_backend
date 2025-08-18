@@ -4,7 +4,7 @@ import { auth } from "../middleware/auth";
 
 const router = Router();
 
-// Protected routes → must be logged in
+
 router.get("/", auth, getMessages);
 router.post("/", auth, postMessage);
 
