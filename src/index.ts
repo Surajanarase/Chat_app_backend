@@ -2,11 +2,11 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import { Server } from 'socket.io';
-import prisma from './prismaclient';   // import prisma
+import prisma from './prismaclient';
 
 import authRoutes from './routes/auth.routes';
 import chatRoutes from './routes/chat.routes';
-import userRoutes from "./routes/user.routes";
+import userRoutes from './routes/user.routes';
 
 const app = express();
 const server = http.createServer(app);
@@ -24,16 +24,16 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
-app.use("/api/users", userRoutes);
+app.use('/api/users', userRoutes); // added users route
 
 // Socket.IO connection
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
-  // Join user-specific room
+  // Join user-specific room (for private messages)
   socket.on("join", (userId: string) => {
     socket.join(userId);
-    console.log(`User ${userId} joined their room`);
+    console.log(`User ${userId} joined room`);
   });
 
   // Handle sending messages
@@ -41,19 +41,21 @@ io.on("connection", (socket) => {
     const { senderId, receiverId, text } = messageData;
 
     try {
-      // Save to DB
+      // Save to DB with user info
       const newMessage = await prisma.message.create({
         data: {
           senderId,
           receiverId,
           text
+        },
+        include: {
+          sender: { select: { id: true, username: true, email: true } },
+          receiver: { select: { id: true, username: true, email: true } }
         }
       });
 
-      // Emit to receiver
+      // Emit to both sender and receiver with usernames
       io.to(receiverId.toString()).emit("receiveMessage", newMessage);
-
-      // Also emit back to sender (so both see consistent data)
       io.to(senderId.toString()).emit("receiveMessage", newMessage);
 
     } catch (err) {
